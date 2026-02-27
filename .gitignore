@@ -27,3 +27,7 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Allow source JavaScript for this static web app
+!/app.js
+!/sw.js

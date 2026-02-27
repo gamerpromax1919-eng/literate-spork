@@ -1,0 +1,10 @@
+{
+  "name": "Offline Chat, Video & Music Hub",
+  "short_name": "Media Hub",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#2563eb",
+  "description": "A local-first app for chat notes, YouTube watch-later planning, and offline media playback.",
+  "icons": []
+}
