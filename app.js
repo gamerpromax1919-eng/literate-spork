@@ -1,19 +1,21 @@
-const chatKey = "chat_messages_v1";
-const youtubeKey = "youtube_links_v1";
-
-const chatLog = document.getElementById("chat-log");
-const chatForm = document.getElementById("chat-form");
-const chatInput = document.getElementById("chat-input");
+const youtubeKey = "youtube_links_v2";
 
 const youtubeForm = document.getElementById("youtube-form");
 const ytTitleInput = document.getElementById("yt-title");
 const ytUrlInput = document.getElementById("yt-url");
-const youtubeList = document.getElementById("youtube-list");
 
 const videoPicker = document.getElementById("video-picker");
 const musicPicker = document.getElementById("music-picker");
-const videoList = document.getElementById("video-list");
-const musicList = document.getElementById("music-list");
+
+const searchInput = document.getElementById("search-input");
+const libraryList = document.getElementById("library-list");
+const playerShell = document.getElementById("player-shell");
+const nowPlayingTitle = document.getElementById("now-playing-title");
+
+let currentFilter = "all";
+let currentSearch = "";
+let mediaRecords = [];
+let youtubeRecords = [];
 
 function getStoredJSON(key, fallback = []) {
   try {
@@ -27,92 +29,15 @@ function setStoredJSON(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-function addMessage(role, text) {
-  const msg = document.createElement("div");
-  msg.className = `msg ${role}`;
-  msg.textContent = `${role === "user" ? "You" : "Assistant"}: ${text}`;
-  chatLog.appendChild(msg);
-  chatLog.scrollTop = chatLog.scrollHeight;
+function normalizeYoutubeUrl(url) {
+  const regex = /(?:v=|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{6,})/;
+  const match = url.match(regex);
+  if (!match) {
+    return null;
+  }
+
+  return `https://www.youtube.com/embed/${match[1]}`;
 }
-
-function buildBotReply(input) {
-  const lower = input.toLowerCase();
-  if (lower.includes("playlist")) {
-    return "Try making a mood playlist: focus, workout, chill, and travel tracks.";
-  }
-  if (lower.includes("offline") || lower.includes("download")) {
-    return "For offline use, add your legal local video/audio files below so they are saved on your device.";
-  }
-  if (lower.includes("youtube")) {
-    return "Save YouTube links in the planner section, then open them when online.";
-  }
-  return "Got it. I can help you organize chat notes, watch-later links, and local media.";
-}
-
-function loadChat() {
-  const items = getStoredJSON(chatKey);
-  if (!items.length) {
-    addMessage("bot", "Hi! Ask me about music, offline watching, or organizing links.");
-    return;
-  }
-
-  items.forEach((entry) => addMessage(entry.role, entry.text));
-}
-
-chatForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const text = chatInput.value.trim();
-  if (!text) {
-    return;
-  }
-
-  const bot = buildBotReply(text);
-  addMessage("user", text);
-  addMessage("bot", bot);
-
-  const chatItems = [...getStoredJSON(chatKey), { role: "user", text }, { role: "bot", text: bot }];
-  setStoredJSON(chatKey, chatItems);
-  chatInput.value = "";
-});
-
-function renderYoutube() {
-  const links = getStoredJSON(youtubeKey);
-  youtubeList.innerHTML = "";
-
-  links.forEach((item, index) => {
-    const li = document.createElement("li");
-    li.innerHTML = `<strong>${item.title}</strong><br /><a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.url}</a>`;
-
-    const removeButton = document.createElement("button");
-    removeButton.textContent = "Remove";
-    removeButton.addEventListener("click", () => {
-      const updated = getStoredJSON(youtubeKey);
-      updated.splice(index, 1);
-      setStoredJSON(youtubeKey, updated);
-      renderYoutube();
-    });
-
-    li.appendChild(removeButton);
-    youtubeList.appendChild(li);
-  });
-}
-
-youtubeForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const title = ytTitleInput.value.trim();
-  const url = ytUrlInput.value.trim();
-  if (!title || !url) {
-    return;
-  }
-
-  const links = getStoredJSON(youtubeKey);
-  links.push({ title, url });
-  setStoredJSON(youtubeKey, links);
-
-  ytTitleInput.value = "";
-  ytUrlInput.value = "";
-  renderYoutube();
-});
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -138,22 +63,22 @@ async function saveMediaFiles(files, type) {
     tx.oncomplete = resolve;
     tx.onerror = () => reject(tx.error);
   });
+
   db.close();
 }
 
 async function readAllMedia() {
   const db = await openDb();
   const tx = db.transaction("media", "readonly");
-  const store = tx.objectStore("media");
-  const request = store.getAll();
+  const request = tx.objectStore("media").getAll();
 
-  const records = await new Promise((resolve, reject) => {
+  const rows = await new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 
   db.close();
-  return records;
+  return rows;
 }
 
 async function removeMedia(id) {
@@ -167,68 +92,173 @@ async function removeMedia(id) {
   db.close();
 }
 
-async function renderMedia() {
-  const records = await readAllMedia();
-  videoList.innerHTML = "";
-  musicList.innerHTML = "";
+function getCombinedLibrary() {
+  const localItems = mediaRecords.map((record) => ({
+    id: `local-${record.id}`,
+    title: record.name,
+    sourceType: record.type,
+    kind: "local",
+    blob: record.blob,
+    mediaId: record.id
+  }));
 
-  records.forEach((record) => {
-    const container = document.createElement("div");
-    container.className = "media-item";
+  const ytItems = youtubeRecords.map((record, index) => ({
+    id: `yt-${index}`,
+    title: record.title,
+    sourceType: "youtube",
+    kind: "youtube",
+    url: record.url,
+    index
+  }));
 
-    const title = document.createElement("div");
-    title.textContent = record.name;
-    container.appendChild(title);
+  return [...ytItems, ...localItems];
+}
 
-    const sourceUrl = URL.createObjectURL(record.blob);
-    const player = document.createElement(record.type === "video" ? "video" : "audio");
-    player.controls = true;
-    player.src = sourceUrl;
-    container.appendChild(player);
-
-    const actions = document.createElement("div");
-    actions.className = "media-actions";
-
-    const remove = document.createElement("button");
-    remove.textContent = "Delete";
-    remove.addEventListener("click", async () => {
-      await removeMedia(record.id);
-      renderMedia();
-    });
-
-    actions.appendChild(remove);
-    container.appendChild(actions);
-
-    if (record.type === "video") {
-      videoList.appendChild(container);
-    } else {
-      musicList.appendChild(container);
-    }
+function filterLibrary(items) {
+  return items.filter((item) => {
+    const matchesFilter = currentFilter === "all" || item.sourceType === currentFilter;
+    const matchesSearch = item.title.toLowerCase().includes(currentSearch);
+    return matchesFilter && matchesSearch;
   });
 }
+
+function playItem(item) {
+  nowPlayingTitle.textContent = `${item.title} · ${item.sourceType}`;
+  playerShell.innerHTML = "";
+
+  if (item.kind === "youtube") {
+    const embed = normalizeYoutubeUrl(item.url);
+    if (!embed) {
+      playerShell.innerHTML = `<p class="note">Cannot play this YouTube URL. Try a full watch URL or youtu.be link.</p>`;
+      return;
+    }
+
+    const frame = document.createElement("iframe");
+    frame.src = embed;
+    frame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    frame.allowFullscreen = true;
+    playerShell.appendChild(frame);
+    return;
+  }
+
+  const sourceUrl = URL.createObjectURL(item.blob);
+  const player = document.createElement(item.sourceType === "video" ? "video" : "audio");
+  player.controls = true;
+  player.autoplay = true;
+  player.src = sourceUrl;
+  playerShell.appendChild(player);
+}
+
+function getTypeLabel(type) {
+  if (type === "audio") return "Music";
+  if (type === "video") return "Video";
+  return "YouTube Video";
+}
+
+async function handleDelete(item) {
+  if (item.kind === "youtube") {
+    youtubeRecords.splice(item.index, 1);
+    setStoredJSON(youtubeKey, youtubeRecords);
+  } else {
+    await removeMedia(item.mediaId);
+    mediaRecords = await readAllMedia();
+  }
+
+  renderLibrary();
+}
+
+function renderLibrary() {
+  const items = filterLibrary(getCombinedLibrary());
+  libraryList.innerHTML = "";
+
+  if (!items.length) {
+    libraryList.innerHTML = `<li class="library-item"><span class="note">No results. Add songs/videos or YouTube links.</span></li>`;
+    return;
+  }
+
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "library-item";
+
+    li.innerHTML = `
+      <div class="item-row">
+        <div class="item-meta">
+          <div class="item-title">${item.title}</div>
+          <div class="item-type">${getTypeLabel(item.sourceType)}</div>
+        </div>
+        <div class="item-actions">
+          <button type="button" data-action="play">Play</button>
+          <button type="button" data-action="delete">Delete</button>
+        </div>
+      </div>
+    `;
+
+    li.querySelector('[data-action="play"]').addEventListener("click", () => playItem(item));
+    li.querySelector('[data-action="delete"]').addEventListener("click", () => handleDelete(item));
+
+    libraryList.appendChild(li);
+  });
+}
+
+youtubeForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const title = ytTitleInput.value.trim();
+  const url = ytUrlInput.value.trim();
+  if (!title || !url) {
+    return;
+  }
+
+  youtubeRecords.push({ title, url });
+  setStoredJSON(youtubeKey, youtubeRecords);
+  ytTitleInput.value = "";
+  ytUrlInput.value = "";
+  renderLibrary();
+});
 
 videoPicker.addEventListener("change", async () => {
   if (!videoPicker.files?.length) {
     return;
   }
+
   await saveMediaFiles(Array.from(videoPicker.files), "video");
   videoPicker.value = "";
-  await renderMedia();
+  mediaRecords = await readAllMedia();
+  renderLibrary();
 });
 
 musicPicker.addEventListener("change", async () => {
   if (!musicPicker.files?.length) {
     return;
   }
+
   await saveMediaFiles(Array.from(musicPicker.files), "audio");
   musicPicker.value = "";
-  await renderMedia();
+  mediaRecords = await readAllMedia();
+  renderLibrary();
+});
+
+searchInput.addEventListener("input", () => {
+  currentSearch = searchInput.value.trim().toLowerCase();
+  renderLibrary();
+});
+
+document.querySelectorAll(".tab").forEach((button) => {
+  button.addEventListener("click", () => {
+    currentFilter = button.dataset.filter;
+    document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
+    button.classList.add("active");
+    renderLibrary();
+  });
 });
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
-loadChat();
-renderYoutube();
-renderMedia();
+async function init() {
+  youtubeRecords = getStoredJSON(youtubeKey);
+  mediaRecords = await readAllMedia();
+  renderLibrary();
+}
+
+init();

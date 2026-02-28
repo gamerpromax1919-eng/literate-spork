@@ -1,10 +1,10 @@
 {
-  "name": "Offline Chat, Video & Music Hub",
-  "short_name": "Media Hub",
+  "name": "TubeMusic Offline Hub",
+  "short_name": "TubeMusic Hub",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#111827",
-  "theme_color": "#2563eb",
-  "description": "A local-first app for chat notes, YouTube watch-later planning, and offline media playback.",
+  "background_color": "#0f1014",
+  "theme_color": "#ef4444",
+  "description": "A YouTube-Music-style app for managing and playing local music, local videos, and saved YouTube videos.",
   "icons": []
 }

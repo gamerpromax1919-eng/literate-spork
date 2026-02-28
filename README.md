@@ -1,11 +1,13 @@
-# Offline Media + Chat Hub
+# TubeMusic Offline Hub
 
-A lightweight web app that helps with:
+A YouTube-Music-style web app for playing **music and videos in one library**.
 
-- quick chat-style notes and suggestions,
-- saving YouTube links for watch-later planning,
-- storing local video files for offline playback,
-- storing local audio/music files for offline playback.
+## What it does
+
+- Combines YouTube links + local files in one searchable library.
+- Filters by **All / Music / Videos / YouTube**.
+- Plays local audio/video files directly in-app (offline-ready after upload).
+- Plays YouTube videos in an embedded player when online.
 
 ## Run locally
 
@@ -13,43 +15,21 @@ A lightweight web app that helps with:
 python3 -m http.server 8000
 ```
 
-Then open `http://localhost:8000`.
+Open `http://localhost:8000`.
 
 ## Publish it
 
-Because this is a static app (`index.html`, CSS, JS, manifest, service worker), you can publish it on any static host.
+Because this is static HTML/CSS/JS, deploy to GitHub Pages, Netlify, or Vercel.
 
-### Option 1: GitHub Pages (free)
+### GitHub Pages
 
-1. Push this repo to GitHub.
-2. In GitHub, go to **Settings → Pages**.
-3. Under **Build and deployment**, set:
-   - **Source**: `Deploy from a branch`
-   - **Branch**: `work` (or your default branch), folder `/ (root)`
-4. Save and wait ~1–2 minutes.
-5. Open the provided URL, usually:
-   - `https://<your-username>.github.io/<repo-name>/`
-
-### Option 2: Netlify (drag-and-drop)
-
-1. Zip the project files.
-2. Go to Netlify and create a new site.
-3. Drag the folder/zip into Netlify Deploy.
-4. Netlify gives you a live URL immediately.
-
-### Option 3: Vercel
-
-1. Import the GitHub repo in Vercel.
-2. Framework preset: **Other** (no build command needed).
-3. Deploy.
-
-## Important publishing notes
-
-- Use **HTTPS** in production so service workers work reliably.
-- If you host under a subpath (like GitHub Pages project site), keep links relative (`./...`) as already configured.
-- Browser storage (`localStorage`, `IndexedDB`) is per-browser and per-device; user data does not sync automatically.
+1. Push your repo.
+2. Open **Settings → Pages**.
+3. Source: **Deploy from a branch**.
+4. Select your branch and `/ (root)`.
+5. Visit `https://<username>.github.io/<repo>/`.
 
 ## Notes
 
-- The app uses browser storage (`localStorage` + `IndexedDB`) on your device.
-- YouTube links are saved as bookmarks; playback requires internet unless you have legal local files.
+- User data is saved in browser storage (`IndexedDB` and `localStorage`) on that device/browser.
+- YouTube playback requires internet and may be limited by embed permissions on some videos.

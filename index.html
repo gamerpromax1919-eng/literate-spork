@@ -3,65 +3,63 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Offline Media + Chat Hub</title>
+    <title>TubeMusic Offline Hub</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="manifest" href="manifest.json" />
   </head>
   <body>
-    <header>
-      <h1>Offline Chat, YouTube Planner & Music Player</h1>
-      <p>
-        Save YouTube links to watch later, keep local offline videos/music,
-        and chat with a lightweight assistant.
-      </p>
+    <header class="topbar">
+      <div>
+        <h1>TubeMusic Offline Hub</h1>
+        <p>Music-style player for all your saved videos + songs.</p>
+      </div>
+      <div class="top-actions">
+        <label class="upload-btn">
+          Add Video Files
+          <input id="video-picker" type="file" accept="video/*" multiple hidden />
+        </label>
+        <label class="upload-btn">
+          Add Music Files
+          <input id="music-picker" type="file" accept="audio/*" multiple hidden />
+        </label>
+      </div>
     </header>
 
-    <main>
-      <section class="card">
-        <h2>Chat Assistant</h2>
-        <div id="chat-log" class="chat-log" aria-live="polite"></div>
-        <form id="chat-form" class="chat-form">
-          <input
-            id="chat-input"
-            type="text"
-            placeholder="Ask for media tips, playlists, or reminders..."
-            required
-          />
-          <button type="submit">Send</button>
-        </form>
+    <main class="layout">
+      <section class="card player-card">
+        <h2>Now Playing</h2>
+        <div id="now-playing-title" class="now-playing-title">Nothing playing yet</div>
+        <div id="player-shell" class="player-shell">
+          <p class="note">Pick any item from library to start.</p>
+        </div>
       </section>
 
-      <section class="card">
-        <h2>YouTube Watch-Later (Offline Planner)</h2>
-        <p class="note">
-          Paste YouTube links you want to save. When you have internet again,
-          open the link. For true offline playback, add downloaded local files
-          in the sections below.
-        </p>
+      <section class="card library-card">
+        <div class="library-header">
+          <h2>Your Library</h2>
+          <input id="search-input" type="search" placeholder="Search songs or videos..." />
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Library filters">
+          <button class="tab active" data-filter="all" type="button">All</button>
+          <button class="tab" data-filter="audio" type="button">Music</button>
+          <button class="tab" data-filter="video" type="button">Videos</button>
+          <button class="tab" data-filter="youtube" type="button">YouTube</button>
+        </div>
+
+        <ul id="library-list" class="library-list"></ul>
+      </section>
+
+      <section class="card youtube-card">
+        <h2>Add YouTube Video</h2>
+        <p class="note">Saved videos appear in the same library as your songs and local videos.</p>
         <form id="youtube-form" class="stack-form">
-          <input id="yt-title" type="text" placeholder="Title" required />
-          <input id="yt-url" type="url" placeholder="https://youtube.com/..." required />
-          <button type="submit">Save Link</button>
+          <input id="yt-title" type="text" placeholder="Video title" required />
+          <input id="yt-url" type="url" placeholder="https://youtube.com/watch?v=..." required />
+          <button type="submit">Add to Library</button>
         </form>
-        <ul id="youtube-list" class="list"></ul>
-      </section>
-
-      <section class="card">
-        <h2>Offline Video Library</h2>
-        <input id="video-picker" type="file" accept="video/*" multiple />
-        <div id="video-list" class="media-list"></div>
-      </section>
-
-      <section class="card">
-        <h2>Offline Music Library</h2>
-        <input id="music-picker" type="file" accept="audio/*" multiple />
-        <div id="music-list" class="media-list"></div>
       </section>
     </main>
-
-    <footer>
-      <small>Data is stored locally on this device using IndexedDB/localStorage.</small>
-    </footer>
 
     <script src="app.js"></script>
   </body>
