@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TubeMusic Offline Hub</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.json" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>TubeMusic Offline Hub</h1>
+        <p>Music-style player for all your saved videos + songs.</p>
+      </div>
+      <div class="top-actions">
+        <label class="upload-btn">
+          Add Video Files
+          <input id="video-picker" type="file" accept="video/*" multiple hidden />
+        </label>
+        <label class="upload-btn">
+          Add Music Files
+          <input id="music-picker" type="file" accept="audio/*" multiple hidden />
+        </label>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card player-card">
+        <h2>Now Playing</h2>
+        <div id="now-playing-title" class="now-playing-title">Nothing playing yet</div>
+        <div id="player-shell" class="player-shell">
+          <p class="note">Pick any item from library to start.</p>
+        </div>
+      </section>
+
+      <section class="card library-card">
+        <div class="library-header">
+          <h2>Your Library</h2>
+          <input id="search-input" type="search" placeholder="Search songs or videos..." />
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Library filters">
+          <button class="tab active" data-filter="all" type="button">All</button>
+          <button class="tab" data-filter="audio" type="button">Music</button>
+          <button class="tab" data-filter="video" type="button">Videos</button>
+          <button class="tab" data-filter="youtube" type="button">YouTube</button>
+        </div>
+
+        <ul id="library-list" class="library-list"></ul>
+      </section>
+
+      <section class="card youtube-card">
+        <h2>Add YouTube Video</h2>
+        <p class="note">Saved videos appear in the same library as your songs and local videos.</p>
+        <form id="youtube-form" class="stack-form">
+          <input id="yt-title" type="text" placeholder="Video title" required />
+          <input id="yt-url" type="url" placeholder="https://youtube.com/watch?v=..." required />
+          <button type="submit">Add to Library</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

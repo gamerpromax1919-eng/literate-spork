@@ -1,0 +1,10 @@
+{
+  "name": "TubeMusic Offline Hub",
+  "short_name": "TubeMusic Hub",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f1014",
+  "theme_color": "#ef4444",
+  "description": "A YouTube-Music-style app for managing and playing local music, local videos, and saved YouTube videos.",
+  "icons": []
+}
